@@ -1,0 +1,138 @@
+---
+
+- name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ os_vars_dir }}/{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ os_vars_dir }}/{{ ansible_distribution }}.yml"
+    - "{{ os_vars_dir }}/{{ ansible_os_family }}.yml"
+    # - default.yml
+  tags:
+    - packages-to-install
+    - vars
+    - dl
+
+- name: remove unneccessary packages
+  package:
+    name: "{{ item }}"
+    state: absent
+  with_items:
+    "{{ packages_to_remove }}"
+  tags: 
+    - packages
+    - remove-packages
+
+- name: pre-install software
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ packages_to_preinstall }}"
+  tags:
+    - packages
+    - packages-to-preinstall
+
+- name: install software
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - "{{ packages_to_install }}"
+  tags:
+    - packages
+    - packages-to-install
+
+- pause:
+
+- name: manually download packages to install
+  get_url:
+    url: "{{ item.url }}"
+    dest: '{{ item.path }}'
+    mode: 0644
+    validate_certs: no
+  with_items: "{{ DL_PACKAGES.installer }}"
+  when:
+    - DL_PACKAGES_LOCALLY | bool
+    - item.path is defined
+  tags:
+    - pkgs
+    - dl
+
+- name: manually download files
+  get_url:
+    url: "{{ item.url }}"
+    dest: '~/'
+    mode: 0644
+  with_items: "{{ DL_PACKAGES.files }}"
+  tags:
+    - pkgs
+    - dl
+
+- name: install downloaded yum pkgs
+  yum:
+    name: "{{ item.url }}"
+    state: present
+  with_items: "{{ DL_PACKAGES.installer }}"
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - pkgs
+    - dl
+    - install-pkgs
+
+- name: install downloaded dnf pkgs
+  dnf:
+    name: "{{ item.url }}"
+    state: present
+  with_items: "{{ DL_PACKAGES.installer }}"
+  when: ansible_distribution == 'Fedora'
+  tags:
+    - pkgs
+    - dl
+    - install-pkgs
+
+- name: install deb packages from web url
+  apt:
+    deb: "{{ item.url }}"
+    state: present
+  with_items: "{{ DL_PACKAGES.installer }}"
+  when:
+    - ansible_os_family == "Debian"
+    - item.path is not defined
+  tags:
+    - pkgs
+    - dl
+    - install-pkgs
+
+- name: install downloaded apt pkgs
+  apt:
+    deb: "{{ item.path }}"
+    state: present
+  with_items: "{{ DL_PACKAGES.installer }}"
+  when:
+    - ansible_os_family == "Debian"
+    - item.path is defined
+  tags:
+    - pkgs
+    - dl
+    - install-pkgs
+
+# - name: install ruby gems
+#   gem:
+#     name: vagrant
+#     version: "{{ vagrant_version | default('2.1.1') }}"
+#     state: present
+
+# - name: download no-ip
+#   unarchive: src=http://www.noip.com/client/linux/noip-duc-linux.tar.gz dest=/usr/local/src copy=no
+#   tags: no-ip
+
+# # - name: install no-ip
+# #   shell: cd /usr/local/src/noip-2.1.9-1/ && make install
+# #   tags: no-ip
+
+# - name: install no-ip
+#   debug: msg="Run this -> 'cd /usr/local/src/noip-2.1.9-1/ && make install'"
+#   tags: no-ip
+
+# - name: make no-ip config file
+#   debug: msg="Run this -> 'noip2 -C'"
