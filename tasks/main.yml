@@ -3,7 +3,7 @@
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
-    - "{{ os_vars_dir }}/{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "{{ os_vars_dir }}/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
     - "{{ os_vars_dir }}/{{ ansible_distribution }}.yml"
     - "{{ os_vars_dir }}/{{ ansible_os_family }}.yml"
     # - default.yml
@@ -18,7 +18,7 @@
     state: absent
   with_items:
     "{{ packages_to_remove }}"
-  tags: 
+  tags:
     - packages
     - remove-packages
 
@@ -41,8 +41,6 @@
   tags:
     - packages
     - packages-to-install
-
-- pause:
 
 - name: manually download packages to install
   get_url:

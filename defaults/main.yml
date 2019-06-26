@@ -7,4 +7,4 @@ packages_to_preinstall: []
 packages_to_install: []
 
 # Enable this if you want a local rpm/deb copy stored
-DL_PACKAGES_LOCALLY: false
+dl_packages_locally: false
