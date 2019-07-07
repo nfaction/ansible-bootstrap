@@ -3,8 +3,30 @@
 os_vars_dir: vars
 
 packages_to_remove: []
-packages_to_preinstall: []
+packages_to_preinstall:
+  - python-apt
 packages_to_install: []
 
 # Enable this if you want a local rpm/deb copy stored
 dl_packages_locally: false
+
+dl_packages_path: "/tmp"
+
+dl_packages_to_install:
+  - name: google-chrome debian
+    url: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
+    binary_type: deb
+    path: "{{ dl_packages_path }}/google-chrome-stable_current_amd64.deb"
+  # - name: no-ip
+  #   url: "http://www.noip.com/client/linux/noip-duc-linux.tar.gz"
+  #   binary_type: tar
+  #   path: "/usr/local/src/noip-duc-linux.tar.gz"
+  #   extracted_path: "/usr/local/src"
+  #   shell: "cd /usr/local/src/noip-2.1.9-1/ && make install && noip2 -C"
+
+gems_to_install: []
+# - name: vagrant
+#   gem_name: vagrant
+#   version: "{{ vagrant_version | default('2.1.1') }}"
+
+shell_commands: []
