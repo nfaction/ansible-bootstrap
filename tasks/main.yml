@@ -180,7 +180,7 @@
   pip:
     name: "{{ item }}"
     state: present
-    executable: "{{ pip_executable }}"
+    executable: "{{ pip_executable | default(omit) }}"
   with_items:
     - "{{ pip_packages_to_install }}"
   tags:

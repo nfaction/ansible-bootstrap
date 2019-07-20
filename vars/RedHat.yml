@@ -3,6 +3,8 @@
 packages_to_remove: []
 
 packages_to_install:
+  - python-setuptools
+  - python-pip
   - tmux
   - ruby
   - git
@@ -11,4 +13,4 @@ packages_to_install:
 
 gem_executable: /opt/rh/rh-ruby23/root/usr/bin/gem
 
-pip_executable: /usr/local/bin/pip
+# pip_executable: /usr/local/bin/pip

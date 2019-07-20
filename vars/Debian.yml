@@ -3,8 +3,8 @@
 packages_to_remove: []
 
 packages_to_install:
-  - python-pip
   - python-setuptools
+  - python-pip
   - tmux
   - vim
   - git
@@ -12,4 +12,4 @@ packages_to_install:
 
 gem_executable: /usr/bin/gem
 
-pip_executable: /usr/local/bin/pip
+# pip_executable: /usr/local/bin/pip
