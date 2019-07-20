@@ -30,6 +30,9 @@ packages_to_remove: []
 
 packages_to_install: []
 
+pip_packages_to_install:
+  - virtualenv
+
 # Enable this if you want a local rpm/deb copy stored
 dl_packages_locally: false
 

@@ -173,6 +173,19 @@
     - packages
     - packages-to-install
 
+########################
+# Install pip Packages #
+########################
+- name: install pip packages
+  pip:
+    name: "{{ item }}"
+    state: present
+    executable: "{{ pip_executable }}"
+  with_items:
+    - "{{ pip_packages_to_install }}"
+  tags:
+    - pip
+
 ######################################
 # Install Custom/Downloaded Packages #
 ######################################
@@ -290,6 +303,8 @@
     name: "{{ item.gem_name }}"
     version: "{{ item.version }}"
     state: "{{ item.state | default('present') }}"
+    executable: "{{ gem_executable | default(omit) }}"
+    env_shebang: true
   with_items:
     - "{{ gems_to_install }}"
   tags:

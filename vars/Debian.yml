@@ -7,7 +7,6 @@ packages_to_install:
   - python-setuptools
   - tmux
   - vim
-  - ruby
   - git
   - rsync
 
