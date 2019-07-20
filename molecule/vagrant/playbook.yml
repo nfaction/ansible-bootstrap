@@ -5,7 +5,5 @@
   vars:
     dl_packages_locally: true
     os_vars_dir: ../../../../group_vars/operating-systems
-#   pre_tasks:
-#     - debug: var=os_vars_dir
   roles:
     - role: ansible-bootstrap

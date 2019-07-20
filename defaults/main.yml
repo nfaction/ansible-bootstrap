@@ -33,12 +33,12 @@ dl_packages_to_install:
     url: "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb"
     binary_type: deb
     path: "{{ dl_packages_path }}/google-chrome-stable_current_amd64.deb"
-  # - name: no-ip
-  #   url: "http://www.noip.com/client/linux/noip-duc-linux.tar.gz"
-  #   binary_type: tar
-  #   path: "/usr/local/src/noip-duc-linux.tar.gz"
-  #   extracted_path: "/usr/local/src"
-  #   shell: "cd /usr/local/src/noip-2.1.9-1/ && make install && noip2 -C"
+    # - name: no-ip
+    #   url: "http://www.noip.com/client/linux/noip-duc-linux.tar.gz"
+    #   binary_type: tar
+    #   path: "/usr/local/src/noip-duc-linux.tar.gz"
+    #   extracted_path: "/usr/local/src"
+    #   shell: "cd /usr/local/src/noip-2.1.9-1/ && make install && noip2 -C"
 
 gems_to_install: []
 # - name: vagrant
