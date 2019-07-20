@@ -1,8 +1,122 @@
 ---
+######################
+## OS Bootstrapping ##
+######################
+#################################
+# Preconfigure OSes for Ansible #
+#################################
+# Ping host, and upon Ansible ping failure, do the below steps, i.e. set a bool flag. Otherwise skip
+- name: test Ansible ssh connection
+  ping:
+  register: ansible_first_ping
+  changed_when: false
+  failed_when: false
+  tags:
+    - preconfigure-ansible
+
+- name: preconfigure systems for Ansible if ping fails
+  block:
+
+    - name: manually check OS distribution
+      raw: "cat /etc/issue | awk '{ print $1 }' | xargs echo -n"
+      register: manual_os_distribution
+      failed_when: false
+      changed_when: false
+      tags:
+        - preconfigure-ansible
+
+    - name: manually check OS version
+      raw: "cat /etc/issue | awk '{ print $3 }' | xargs echo -n"
+      register: manual_os_version
+      failed_when: false
+      changed_when: false
+      tags:
+        - preconfigure-ansible
+
+    - name: manually detect OS family
+      raw: uname -s
+      register: is_osx
+      failed_when: false
+      changed_when: false
+      tags:
+        - preconfigure-ansible
+        - osx-prep
+
+    - name: determine if homebrew is installed
+      stat:
+        path: /usr/local/bin/brew
+      register: homebrew_present
+      when:
+        - "is_osx.stdout.find('Darwin') != -1"
+      tags:
+        - preconfigure-ansible
+        - osx-prep
+
+    - name: install python and deps for ansible modules for Fedora
+      raw: sudo dnf install -y {{ dnf_packages_to_preinstall | join(' ') }}
+      when: manual_os_distribution.stdout.find('Fedora') != -1
+      become: yes
+      tags:
+        - preconfigure-ansible
+        - fedora-prep
+
+    - name: install python and deps for ansible modules Debian systems
+      raw: sudo apt install -y {{ apt_packages_to_preinstall | join(' ') }}
+      when: manual_os_distribution.stdout.find('Debian') != -1
+      become: yes
+      tags:
+        - preconfigure-ansible
+        - apt-prep
+
+    - name: install homebrew for ansible modules
+      raw: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      when:
+        - is_osx.stdout.find('Darwin') != -1
+        - homebrew_present is defined
+        - not homebrew_present.stat.exists | bool
+      tags:
+        - preconfigure-ansible
+        - osx-prep
+  when:
+    - ansible_first_ping.ping != "pong"
+
+- name: test ping again
+  ping:
+  tags:
+    - preconfigure-ansible
+
 ###################
 # Gather OS Facts #
 ###################
+- name: get facts manually
+  setup:
+  tags:
+    - dotfiles
+    - ssh
+    - pip
+
+# - name: get facts manually
+#   setup:
+#     filter: "{{ item }}"
+#   with_items:
+#     - "{{ facts_to_gather }}"
+#   tags:
+#     - dotfiles
+#     - ssh
+#     - pip
+
 - name: gather os specific variables
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_system }}.yml"
+    - default.yml
+  tags:
+    - vars
+    - pip
+
+- name: gather other os specific variables
   include_vars: "{{ item }}"
   with_first_found:
     - "{{ os_vars_dir }}/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
@@ -17,6 +131,18 @@
 #######################
 # Install OS Packages #
 #######################
+- name: apt update for debian systems
+  apt:
+    name: "{{ item }}"
+    update_cache: true
+    state: present
+  when:
+    - ansible_os_family == "Debian"
+  with_items:
+    - "{{ packages_to_preinstall | default([]) }}"
+  tags:
+    - packages
+
 - name: remove unneccessary packages
   package:
     name: "{{ item }}"

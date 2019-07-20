@@ -2,9 +2,25 @@
 
 os_vars_dir: vars
 
-packages_to_remove: []
-packages_to_preinstall:
+facts_to_gather:
+  - ansible_pkg_mgr
+  - ansible_distribution
+  - ansible_distribution_major_version
+  - ansible_os_family
+  - ansible_system
+  - ansible_user_dir
+
+apt_packages_to_preinstall:
   - python-apt
+
+dnf_packages_to_preinstall:
+  - python
+  - python-dnf
+  - libselinux-python
+  - sudo
+
+packages_to_remove: []
+
 packages_to_install: []
 
 # Enable this if you want a local rpm/deb copy stored
