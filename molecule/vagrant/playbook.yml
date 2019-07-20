@@ -1,9 +1,0 @@
----
-- name: Converge
-  hosts: all
-  become: yes
-  vars:
-    dl_packages_locally: true
-    os_vars_dir: ../../../../group_vars/operating-systems
-  roles:
-    - role: ansible-bootstrap

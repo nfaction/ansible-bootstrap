@@ -62,7 +62,9 @@
 
     - name: install python and deps for ansible modules Debian systems
       raw: sudo apt install -y {{ apt_packages_to_preinstall | join(' ') }}
-      when: manual_os_distribution.stdout.find('Debian') != -1
+      when:
+        - manual_os_distribution.stdout.find('Debian') != -1 or
+            manual_os_distribution.stdout.find('Ubuntu') != -1
       become: yes
       tags:
         - preconfigure-ansible
@@ -95,22 +97,12 @@
     - ssh
     - pip
 
-# - name: get facts manually
-#   setup:
-#     filter: "{{ item }}"
-#   with_items:
-#     - "{{ facts_to_gather }}"
-#   tags:
-#     - dotfiles
-#     - ssh
-#     - pip
-
 - name: gather os specific variables
   include_vars: "{{ item }}"
   with_first_found:
     - "{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
     - "{{ ansible_distribution }}.yml"
-    - "{{ ansible_system }}.yml"
+    - "{{ ansible_os_family }}.yml"
     - default.yml
   tags:
     - vars
@@ -123,6 +115,8 @@
     - "{{ os_vars_dir }}/{{ ansible_distribution }}.yml"
     - "{{ os_vars_dir }}/{{ ansible_os_family }}.yml"
     - default.yml
+  when:
+    - not os_vars_dir == "vars"
   tags:
     - packages-to-install
     - vars
@@ -147,8 +141,10 @@
   package:
     name: "{{ item }}"
     state: absent
+    use: "{{ package_mgr_to_use }}"
   with_items:
-    "{{ packages_to_remove | default([]) }}"
+    - "{{ packages_to_remove | default([]) }}"
+    - "{{ extra_packages_to_remove | default([]) }}"
   tags:
     - packages
     - remove-packages
@@ -157,8 +153,10 @@
   package:
     name: "{{ item }}"
     state: present
+    use: "{{ package_mgr_to_use }}"
   with_items:
     - "{{ packages_to_preinstall | default([]) }}"
+    - "{{ extra_packages_to_preinstall | default([]) }}"
   tags:
     - packages
     - packages-to-preinstall
@@ -167,8 +165,10 @@
   package:
     name: "{{ item }}"
     state: present
+    use: "{{ package_mgr_to_use }}"
   with_items:
     - "{{ packages_to_install | default([]) }}"
+    - "{{ extra_packages_to_install | default([]) }}"
   tags:
     - packages
     - packages-to-install
