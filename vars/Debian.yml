@@ -1,6 +1,19 @@
 ---
 
-packages_to_remove: []
+apt_keys: []
+
+apt_repositories:
+  - name: remove free apt repos
+    repo: "deb http://deb.debian.org/debian {{ ansible_distribution_release }} main"
+    state: absent
+  - name: add non-free free apt repos
+    repo: "deb http://deb.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
+    state: present
+    filename: debian-nonfree
+  - name: add non-free free apt repos
+    repo: "deb-src http://deb.debian.org/debian/ {{ ansible_distribution_release }} main non-free"
+    state: present
+    filename: debian-nonfree
 
 packages_to_install:
   - python-setuptools
@@ -10,6 +23,6 @@ packages_to_install:
   - git
   - rsync
 
-gem_executable: /usr/bin/gem
+pip_executable: /usr/local/bin/pip
 
-# pip_executable: /usr/local/bin/pip
+gem_executable: /usr/bin/gem

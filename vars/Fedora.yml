@@ -5,7 +5,6 @@ yum_keys: []
 yum_repos: []
 
 packages_to_install:
-  - epel-release
   - python-setuptools
   - python-pip
   - tmux

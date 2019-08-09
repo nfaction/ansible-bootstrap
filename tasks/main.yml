@@ -16,7 +16,6 @@
 
 - name: preconfigure systems for Ansible if ping fails
   block:
-
     - name: manually check OS distribution
       raw: "cat /etc/issue | awk '{ print $1 }' | xargs echo -n"
       register: manual_os_distribution
@@ -93,7 +92,6 @@
 - name: get facts manually
   setup:
   tags:
-    - dotfiles
     - ssh
     - pip
 
@@ -108,35 +106,9 @@
     - vars
     - pip
 
-- name: gather other os specific variables
-  include_vars: "{{ item }}"
-  with_first_found:
-    - "{{ os_vars_dir }}/{{ ansible_distribution }}-{{ ansible_distribution_major_version }}.yml"
-    - "{{ os_vars_dir }}/{{ ansible_distribution }}.yml"
-    - "{{ os_vars_dir }}/{{ ansible_os_family }}.yml"
-    - default.yml
-  when:
-    - not os_vars_dir == "vars"
-  tags:
-    - packages-to-install
-    - vars
-    - dl
-
-#######################
-# Install OS Packages #
-#######################
-- name: apt update for debian systems
-  apt:
-    name: "{{ item }}"
-    update_cache: true
-    state: present
-  when:
-    - ansible_os_family == "Debian"
-  with_items:
-    - "{{ packages_to_preinstall | default([]) }}"
-  tags:
-    - packages
-
+####################
+# Prepare Packages #
+####################
 - name: remove unneccessary packages
   package:
     name: "{{ item }}"
@@ -149,6 +121,75 @@
     - packages
     - remove-packages
 
+- name: configure Debian systems
+  block:
+    - name: Add apt keys
+      apt_key:
+        keyserver: "{{ item.gpg_key | default(omit) }}"
+        id: "{{ item.gpg_key_id | default(omit) }}"
+        data: "{{ item.data | default(omit) }}"
+        file: "{{ item.file | default(omit) }}"
+        keyring: "{{ item.keyring | default(omit) }}"
+        url: "{{ item.url | default(omit) }}"
+        validate_certs: "{{ item.validate_certs | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+      with_items:
+        - "{{ apt_keys }}"
+      tags:
+        - package-repos
+
+    - name: configure apt repositories
+      apt_repository:
+        repo: "{{ item.repo }}"
+        filename: "{{ item.filename | default(omit) }}"
+        state: "{{ item.state | default('present') }}"
+        mode: "{{ item.mode | default(omit) }}"
+        codename: "{{ item.codename | default(omit) }}"
+        update_cache: "{{ item.update_cache | default(true) }}"
+        validate_certs: "{{ item.validate_certs | default(omit) }}"
+      with_items:
+        - "{{ apt_repositories }}"
+      tags:
+        - package-repos
+  when:
+    - 'ansible_os_family == "Debian"'
+
+- name: configure RedHat systems
+  block:
+    - name: Add an rpm keys
+      rpm_key:
+        key: "{{ item.repo_key }}"
+        state: present
+      with_items:
+        - "{{ yum_keys | default([]) }}"
+      tags:
+        - package-repos
+
+    - name: configure yum repositories
+      yum_repository:
+        name: "{{ item.repo_name }}"
+        file: "{{ item.file }}"
+        description: "{{ item.repo_description | default(omit) }}"
+        baseurl: "{{ item.repo_baseurl }}"
+        gpgkey: "{{ item.repo_key | default(omit) }}"
+        gpgcheck: "{{ item.gpg_check | default(false) }}"
+        repo_gpgcheck: "{{ item.repo_gpgcheck | default(omit) }}"
+        sslverify: "{{ item.sslverify | default(omit) }}"
+        sslcacert: "{{ item.sslcacert | default(omit) }}"
+        metadata_expire: "{{ item.metadata_expire | default(omit) }}"
+        enabled: "{{ item.enabled | default(true) }}"
+        exclude: "{{ item.exclude | default(omit) }}"
+        state: "{{ item.state | default(omit) }}"
+      with_items:
+        - "{{ yum_repos | default([]) }}"
+      tags:
+        - package-repos
+  when:
+    - 'ansible_os_family == "RedHat"'
+
+#######################
+# Install OS Packages #
+#######################
 - name: pre-install software
   package:
     name: "{{ item }}"
@@ -189,111 +230,110 @@
 ######################################
 # Install Custom/Downloaded Packages #
 ######################################
-- name: manually download packages and files
-  get_url:
-    url: "{{ item.url }}"
-    dest: '{{ item.path }}'
-    mode: 0644
-    validate_certs: no
-  with_items:
-    - "{{ dl_packages_to_install }}"
+- name: install custom/downloaded packages
+  block:
+    - name: manually download packages and files
+      get_url:
+        url: "{{ item.url }}"
+        dest: '{{ item.path }}'
+        mode: 0644
+        validate_certs: no
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - item.path is defined
+      tags:
+        - pkgs
+        - dl
+
+    - name: install downloaded yum pkgs
+      yum:
+        name: "{{ item.url }}"
+        state: present
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - ansible_distribution == 'CentOS'
+        - item.path is not defined
+        - "item.binary_type == 'rpm'"
+      tags:
+        - pkgs
+        - dl
+        - install-pkgs
+
+    - name: install downloaded dnf pkgs
+      dnf:
+        name: "{{ item.url }}"
+        state: present
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - "ansible_distribution == 'Fedora'"
+        - item.path is not defined
+        - "item.binary_type == 'rpm'"
+      tags:
+        - pkgs
+        - dl
+        - install-pkgs
+
+    - name: install deb packages from web url
+      apt:
+        deb: "{{ item.url }}"
+        state: present
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - ansible_os_family == "Debian"
+        - item.path is not defined
+        - "item.binary_type == 'deb'"
+      tags:
+        - pkgs
+        - dl
+        - install-pkgs
+
+    - name: install downloaded apt pkgs
+      apt:
+        deb: "{{ item.path }}"
+        state: present
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - ansible_os_family == "Debian"
+        - item.path is defined
+        - "item.binary_type == 'deb'"
+      tags:
+        - pkgs
+        - dl
+        - install-pkgs
+
+    ####################
+    # Install Archives #
+    ####################
+    - name: unarchive any downloaded files
+      unarchive:
+        src: "{{ item.path }}"
+        dest: "{{ item.extracted_path }}"
+        remote_src: "{{ item.remote_src | default(true) }}"
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - item.extracted_path is defined
+        - "item.binary_type == 'tar'"
+      tags:
+        - unarchive
+
+    - name: install unarchived files
+      shell: "{{ item.shell }}"
+      with_items:
+        - "{{ dl_packages_to_install }}"
+      when:
+        - item.shell is defined
+        - "item.binary_type == 'tar'"
+      tags:
+        - unarchive
+        - shell
   when:
     - dl_packages_locally | bool
-    - item.path is defined
-  tags:
-    - pkgs
-    - dl
-
-- name: install downloaded yum pkgs
-  yum:
-    name: "{{ item.url }}"
-    state: present
-  with_items:
-    - "{{ dl_packages_to_install }}"
-  when:
-    - dl_packages_locally | bool
-    - ansible_distribution == 'CentOS'
-    - item.path is not defined
-    - "item.binary_type == 'rpm'"
-  tags:
-    - pkgs
-    - dl
-    - install-pkgs
-
-- name: install downloaded dnf pkgs
-  dnf:
-    name: "{{ item.url }}"
-    state: present
-  with_items:
-    - "{{ dl_packages_to_install }}"
-  when:
-    - dl_packages_locally | bool
-    - "ansible_distribution == 'Fedora'"
-    - item.path is not defined
-    - "item.binary_type == 'rpm'"
-  tags:
-    - pkgs
-    - dl
-    - install-pkgs
-
-- name: install deb packages from web url
-  apt:
-    deb: "{{ item.url }}"
-    state: present
-  with_items:
-    - "{{ dl_packages_to_install }}"
-  when:
-    - dl_packages_locally | bool
-    - ansible_os_family == "Debian"
-    - item.path is not defined
-    - "item.binary_type == 'deb'"
-  tags:
-    - pkgs
-    - dl
-    - install-pkgs
-
-- name: install downloaded apt pkgs
-  apt:
-    deb: "{{ item.path }}"
-    state: present
-  with_items:
-    - "{{ dl_packages_to_install }}"
-  when:
-    - dl_packages_locally | bool
-    - ansible_os_family == "Debian"
-    - item.path is defined
-    - "item.binary_type == 'deb'"
-  tags:
-    - pkgs
-    - dl
-    - install-pkgs
-
-####################
-# Install Archives #
-####################
-- name: unarchive any downloaded files
-  unarchive:
-    src: "{{ item.path }}"
-    dest: "{{ item.extracted_path }}"
-    remote_src: "{{ item.remote_src | default(true) }}"
-  with_items:
-    - "{{ dl_packages_to_install }}"
-  when:
-    - item.extracted_path is defined
-    - "item.binary_type == 'tar'"
-  tags:
-    - unarchive
-
-# - name: install unarchived files
-#   shell: "{{ item.shell }}"
-#   with_items:
-#     - "{{ dl_packages_to_install }}"
-#   when:
-#     - item.shell is defined
-#     - "item.binary_type == 'tar'"
-#   tags:
-#     - unarchive
-#     - shell
 
 #####################
 # Install Ruby Gems #
@@ -309,11 +349,3 @@
     - "{{ gems_to_install }}"
   tags:
     - gems
-
-##############################
-# Run any erroneous commands #
-##############################
-# - name: run any erroneous shell commands
-#   shell: "{{ item.shell }}"
-#   with_items:
-#     - "{{ shell_commands }}"

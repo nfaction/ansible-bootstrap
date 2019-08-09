@@ -1,18 +1,17 @@
 ---
 
-yum_keys: []
+apt_keys: []
 
-yum_repos: []
+apt_repositories: []
 
 packages_to_install:
-  - epel-release
   - python-setuptools
   - python-pip
   - tmux
-  - ruby
+  - vim
   - git
   - rsync
 
-gem_executable: /opt/rh/rh-ruby23/root/usr/bin/gem
-
 pip_executable: /usr/bin/pip
+
+gem_executable: /usr/bin/gem
