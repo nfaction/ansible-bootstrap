@@ -70,7 +70,7 @@
         - apt-prep
 
     - name: install homebrew for ansible modules
-      raw: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+      command: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
       when:
         - is_osx.stdout.find('Darwin') != -1
         - homebrew_present is defined
@@ -79,7 +79,7 @@
         - preconfigure-ansible
         - osx-prep
   when:
-    - ansible_first_ping.ping != "pong"
+    - ansible_first_ping.ping != "pong" or force_bootstrap | bool
 
 - name: test ping again
   ping:
@@ -93,7 +93,10 @@
   setup:
   tags:
     - ssh
+    - brew
+    - brew-cask
     - pip
+    - gems
 
 - name: gather os specific variables
   include_vars: "{{ item }}"
@@ -104,7 +107,10 @@
     - default.yml
   tags:
     - vars
+    - brew
+    - brew-cask
     - pip
+    - gems
 
 ####################
 # Prepare Packages #
@@ -213,10 +219,48 @@
   tags:
     - packages
     - packages-to-install
+    - brew
+    - brew-cask
+
+- name: install homebrew casks
+  homebrew_cask:
+    name: "{{ item }}"
+    state: present
+    install_options: "appdir=/Applications"
+  with_items:
+    - "{{ homebrew_casks_to_install | default([]) }}"
+  when:
+    - ansible_os_family == "Darwin"
+  tags:
+    - packages
+    - packages-to-install
+    - brew
+    - brew-cask
 
 ########################
 # Install pip Packages #
 ########################
+- name: install pip
+  easy_install:
+    name: pip
+    state: present
+  become: yes
+  when: ansible_os_family != "Debian"
+
+- name: install pip packages for OSX
+  pip:
+    name: "{{ item }}"
+    state: present
+    executable: "{{ pip_executable | default(omit) }}"
+    extra_args: --ignore-installed six
+  become: true
+  with_items:
+    - "{{ pip_packages_to_install }}"
+  when:
+    - ansible_os_family == "Darwin"
+  tags:
+    - pip
+
 - name: install pip packages
   pip:
     name: "{{ item }}"
@@ -224,6 +268,8 @@
     executable: "{{ pip_executable | default(omit) }}"
   with_items:
     - "{{ pip_packages_to_install }}"
+  when:
+    - ansible_os_family != "Darwin"
   tags:
     - pip
 
@@ -341,7 +387,7 @@
 - name: install ruby gems
   gem:
     name: "{{ item.gem_name }}"
-    version: "{{ item.version }}"
+    version: "{{ item.version | default(omit) }}"
     state: "{{ item.state | default('present') }}"
     executable: "{{ gem_executable | default(omit) }}"
     env_shebang: true
