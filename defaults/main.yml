@@ -4,6 +4,9 @@
 ansible_root_dir: "{{ playbook_dir }}"
 ansible_root_dir_roles_path: "{{ ansible_root_dir }}/roles"
 
+username: "{{ ansible_user | default('') }}"
+force_bootstrap: false
+
 ############################
 # Preconfigure for Ansible #
 ############################
