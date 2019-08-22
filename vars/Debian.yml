@@ -18,11 +18,10 @@ apt_repositories:
 packages_to_install:
   - python-setuptools
   - python-pip
+  - python-virtualenv
   - tmux
   - vim
   - git
   - rsync
-
-pip_executable: /usr/local/bin/pip
 
 gem_executable: /usr/bin/gem
