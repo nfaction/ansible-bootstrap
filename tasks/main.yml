@@ -137,10 +137,13 @@
         file: "{{ item.file | default(omit) }}"
         keyring: "{{ item.keyring | default(omit) }}"
         url: "{{ item.url | default(omit) }}"
+        codename: "{{ item.codename | default(omit) }}"
+        filename: "{{ item.filename | default(omit) }}"
         validate_certs: "{{ item.validate_certs | default(omit) }}"
         state: "{{ item.state | default('present') }}"
       with_items:
-        - "{{ apt_keys }}"
+        - "{{ apt_keys | default([]) }}"
+        - "{{ extra_apt_keys | default([]) }}"
       tags:
         - package-repos
 
@@ -154,7 +157,8 @@
         update_cache: "{{ item.update_cache | default(true) }}"
         validate_certs: "{{ item.validate_certs | default(omit) }}"
       with_items:
-        - "{{ apt_repositories }}"
+        - "{{ apt_repositories | default([]) }}"
+        - "{{ extra_apt_repositories | default([]) }}"
       tags:
         - package-repos
   when:
@@ -168,6 +172,7 @@
         state: present
       with_items:
         - "{{ yum_keys | default([]) }}"
+        - "{{ extra_yum_keys | default([]) }}"
       tags:
         - package-repos
 
@@ -188,6 +193,7 @@
         state: "{{ item.state | default(omit) }}"
       with_items:
         - "{{ yum_repos | default([]) }}"
+        - "{{ extra_yum_repos | default([]) }}"
       tags:
         - package-repos
   when:
@@ -229,6 +235,7 @@
     install_options: "appdir=/Applications"
   with_items:
     - "{{ homebrew_casks_to_install | default([]) }}"
+    - "{{ extra_homebrew_casks_to_install | default([]) }}"
   when:
     - ansible_os_family == "Darwin"
   tags:
@@ -255,7 +262,8 @@
     extra_args: --ignore-installed six
   become: true
   with_items:
-    - "{{ pip_packages_to_install }}"
+    - "{{ pip_packages_to_install | default([]) }}"
+    - "{{ extra_pip_packages_to_install | default([]) }}"
   when:
     - ansible_os_family == "Darwin"
   tags:
@@ -267,7 +275,8 @@
     state: present
     executable: "{{ pip_executable | default(omit) }}"
   with_items:
-    - "{{ pip_packages_to_install }}"
+    - "{{ pip_packages_to_install | default([]) }}"
+    - "{{ extra_pip_packages_to_install | default([]) }}"
   when:
     - ansible_os_family != "Darwin"
   tags:
@@ -285,7 +294,8 @@
         mode: 0644
         validate_certs: no
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - item.path is defined
       tags:
@@ -297,7 +307,8 @@
         name: "{{ item.url }}"
         state: present
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - ansible_distribution == 'CentOS'
         - item.path is not defined
@@ -312,7 +323,8 @@
         name: "{{ item.url }}"
         state: present
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - "ansible_distribution == 'Fedora'"
         - item.path is not defined
@@ -327,7 +339,8 @@
         deb: "{{ item.url }}"
         state: present
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - ansible_os_family == "Debian"
         - item.path is not defined
@@ -342,7 +355,8 @@
         deb: "{{ item.path }}"
         state: present
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - ansible_os_family == "Debian"
         - item.path is defined
@@ -361,7 +375,8 @@
         dest: "{{ item.extracted_path }}"
         remote_src: "{{ item.remote_src | default(true) }}"
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - item.extracted_path is defined
         - "item.binary_type == 'tar'"
@@ -371,7 +386,8 @@
     - name: install unarchived files
       shell: "{{ item.shell }}"
       with_items:
-        - "{{ dl_packages_to_install }}"
+        - "{{ dl_packages_to_install | default([]) }}"
+        - "{{ extra_dl_packages_to_install | default([]) }}"
       when:
         - item.shell is defined
         - "item.binary_type == 'tar'"
@@ -392,6 +408,7 @@
     executable: "{{ gem_executable | default(omit) }}"
     env_shebang: true
   with_items:
-    - "{{ gems_to_install }}"
+    - "{{ gems_to_install | default([]) }}"
+    - "{{ extra_gems_to_install | default([]) }}"
   tags:
     - gems
