@@ -16,9 +16,6 @@ apt_repositories:
     filename: debian-nonfree
 
 packages_to_install:
-  - python-setuptools
-  - python-pip
-  - python-virtualenv
   - tmux
   - vim
   - git

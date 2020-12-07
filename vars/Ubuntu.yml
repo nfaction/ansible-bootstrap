@@ -5,8 +5,6 @@ apt_keys: []
 apt_repositories: []
 
 packages_to_install:
-  - python-setuptools
-  - python-pip
   - tmux
   - vim
   - git
