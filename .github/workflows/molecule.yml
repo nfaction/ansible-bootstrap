@@ -22,8 +22,8 @@ jobs:
         distro:
           - debian10
           - debian11
-          - centos7
-          - ubuntu1804
+          # - centos7
+          # - ubuntu1804
 
     steps:
       - name: Check out the codebase.
