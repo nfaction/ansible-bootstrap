@@ -207,7 +207,7 @@
     name: "{{ item }}"
     state: present
     use: "{{ package_mgr_to_use }}"
-  with_items:
+  loop:
     - "{{ packages_to_preinstall | default([]) }}"
     - "{{ extra_packages_to_preinstall | default([]) }}"
   tags:
@@ -219,7 +219,7 @@
     name: "{{ item }}"
     state: present
     use: "{{ package_mgr_to_use }}"
-  with_items:
+  loop:
     - "{{ packages_to_install | default([]) }}"
     - "{{ extra_packages_to_install | default([]) }}"
   tags:
@@ -233,7 +233,8 @@
     name: "{{ item }}"
     state: present
     install_options: "appdir=/Applications"
-  with_items:
+  retries: 5
+  loop:
     - "{{ homebrew_casks_to_install | default([]) }}"
     - "{{ extra_homebrew_casks_to_install | default([]) }}"
   when:

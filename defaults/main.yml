@@ -30,6 +30,8 @@ packages_to_remove: []
 
 packages_to_install: []
 
+homebrew_casks_to_install: []
+
 pip_executable: pip3
 
 pip_packages_to_install:
