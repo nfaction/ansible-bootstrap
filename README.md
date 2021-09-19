@@ -1,6 +1,6 @@
 # ansible-bootstrap
 
-[![Build Status](https://travis-ci.org/nfaction/ansible-bootstrap.svg?branch=master)](https://travis-ci.org/nfaction/ansible-bootstrap)
+[![Ansible Molecule Test Matrix](https://github.com/nfaction/ansible-bootstrap/actions/workflows/molecule.yml/badge.svg)](https://github.com/nfaction/ansible-bootstrap/actions/workflows/molecule.yml)
 
 Role to bootstrap systems/hosts
 
