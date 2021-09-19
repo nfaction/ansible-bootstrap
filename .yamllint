@@ -31,5 +31,3 @@ rules:
     type: unix
   trailing-spaces: disable
   truthy: disable
-  metadata::
-    - role-name
