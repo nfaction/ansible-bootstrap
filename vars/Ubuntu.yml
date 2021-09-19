@@ -5,11 +5,11 @@ apt_keys: []
 apt_repositories: []
 
 packages_to_install:
-  - tmux
   - vim
   - git
   - rsync
+  - tmux
 
-pip_executable: /usr/bin/pip
+pip_executable: /usr/local/bin/pip
 
 gem_executable: /usr/bin/gem

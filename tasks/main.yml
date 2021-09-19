@@ -161,8 +161,13 @@
         - "{{ extra_apt_repositories | default([]) }}"
       tags:
         - package-repos
+
+    - name: perform an apt update
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
   when:
-    - 'ansible_os_family == "Debian"'
+    - ansible_os_family == 'Debian'
 
 - name: configure RedHat systems
   block:
