@@ -14,11 +14,10 @@ packages_to_install:
   - wget
   - ffmpeg
   - md5deep
-  - sshrc
   - ruby
 
 homebrew_casks_to_install:
-  - google-chrome
+  - spectacle
 
 pip_executable: /usr/local/bin/pip
 
