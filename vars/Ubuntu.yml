@@ -10,6 +10,6 @@ packages_to_install:
   - rsync
   - tmux
 
-pip_executable: /usr/local/bin/pip
+pip_executable: /usr/bin/pip
 
 gem_executable: /usr/bin/gem
