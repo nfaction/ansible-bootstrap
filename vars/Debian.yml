@@ -6,6 +6,9 @@ apt_repositories:
   - name: remove free apt repos
     repo: "deb http://deb.debian.org/debian {{ ansible_distribution_release }} main"
     state: absent
+  - name: remove free apt src repos
+    repo: "deb-src http://deb.debian.org/debian {{ ansible_distribution_release }} main"
+    state: absent
   - name: add non-free free apt repos
     repo: "deb http://deb.debian.org/debian {{ ansible_distribution_release }} main contrib non-free"
     state: present
