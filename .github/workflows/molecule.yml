@@ -35,10 +35,10 @@ jobs:
     strategy:
       matrix:
         distro:
-          - debian10
-          - debian11
-          - centos7
-          - ubuntu2004
+          - debian12
+          - debian13
+          # - centos7
+          - ubuntu2404
 
     steps:
       - name: Check out the codebase.
