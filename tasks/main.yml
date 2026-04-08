@@ -65,6 +65,7 @@
         - manual_os_distribution.stdout.find('Debian') != -1 or
             manual_os_distribution.stdout.find('Ubuntu') != -1
       become: true
+      changed_when: false
       tags:
         - preconfigure-ansible
         - apt-prep
